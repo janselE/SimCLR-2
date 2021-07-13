@@ -35,13 +35,16 @@ class SimCLR(nn.Module):
             nn.Linear(self.n_features, self.n_features, bias=False),
         )
 
-    def forward(self, x_i, x_j, attn=False):
+    def forward(self, x_i, x_j, attn=False, mask_type='sigmoid'):
         h_i = self.encoder(x_i)
         h_j = self.encoder(x_j)
 
         if attn:
             mask = self.attn(h_i)
-            mask = torch.sigmoid(mask)
+            if mask_type == "softmax":
+                mask = torch.softmax(mask, 1)
+            if mask_type == "sigmoid":
+                mask = torch.sigmoid(mask)
             h_i = h_i * mask
             h_j = h_j * mask
 

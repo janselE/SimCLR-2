@@ -31,7 +31,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         x_j = x_j.cuda(non_blocking=True)
 
         # positive pair, with encoding
-        h_i, h_j, z_i, z_j, mask = model(x_i, x_j, args.attn_head)
+        h_i, h_j, z_i, z_j, mask = model(x_i, x_j, args.attn_head, args.mask)
 
         loss = criterion(z_i, z_j).to(args.device)
         loss.backward()
@@ -127,7 +127,10 @@ def main(gpu, args):
 
     writer = None
     if args.nr == 0:
-        writer = SummaryWriter(os.path.join('runs', args.name))
+        if args.attn_head:
+            writer = SummaryWriter(os.path.join('runs', f"{args.mask}_{args.dataset}_{args.epochs}"))
+        else:
+            writer = SummaryWriter(os.path.join('runs', f"{args.dataset}_{args.epochs}"))
 
     args.global_step = 0
     args.current_epoch = 0

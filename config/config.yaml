@@ -15,7 +15,7 @@ epochs: 100
 dataset: "CIFAR10" # STL10
 pretrain: True
 attn_head: True
-name: "attn_cifar10_128"
+mask: "sigmoid"
 
 # model options
 resnet: "resnet18"

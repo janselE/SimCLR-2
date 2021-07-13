@@ -4,7 +4,8 @@ gpus: 1 # I recommend always assigning 1 GPU to 1 node
 nr: 0 # machine nr. in node (0 -- nodes - 1)
 dataparallel: 0 # Use DataParallel instead of DistributedDataParallel
 workers: 8
-dataset_dir: "./datasets"
+dataset_dir: "/work/LAS/jannesar-lab/janselh/data/"
+
 
 # train options
 seed: 42 # sacred handles automatic seeding when passed in the config
@@ -18,7 +19,7 @@ attn_head: True
 mask: "sigmoid"
 
 # model options
-resnet: "resnet18"
+resnet: "resnet50"
 projection_dim: 64 # "[...] to project the representation to a 128-dimensional latent space"
 
 # loss options

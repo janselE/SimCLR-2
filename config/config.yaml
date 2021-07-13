@@ -13,7 +13,9 @@ image_size: 224
 start_epoch: 0
 epochs: 100
 dataset: "CIFAR10" # STL10
-pretrain: True 
+pretrain: True
+attn_head: True
+name: "attn_cifar10_128"
 
 # model options
 resnet: "resnet18"
@@ -25,7 +27,7 @@ weight_decay: 1.0e-6 # "optimized using LARS [...] and weight decay of 10−6"
 temperature: 0.5 # see appendix B.7.: Optimal temperature under different batch sizes
 
 # reload options
-model_path: "save" # set to the directory containing `checkpoint_##.tar` 
+model_path: "save" # set to the directory containing `checkpoint_##.tar`
 epoch_num: 100 # set to checkpoint number
 reload: False
 

@@ -31,9 +31,9 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         x_j = x_j.cuda(non_blocking=True)
 
         # positive pair, with encoding
-        h_i, h_j, z_i, z_j = model(x_i, x_j)
+        h_i, h_j, z_i, z_j, mask = model(x_i, x_j, args.attn_head)
 
-        loss = criterion(z_i, z_j)
+        loss = criterion(z_i, z_j).to(args.device)
         loss.backward()
 
         optimizer.step()
@@ -47,6 +47,8 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
         if args.nr == 0:
             writer.add_scalar("Loss/train_epoch", loss.item(), args.global_step)
+            if args.attn_head:
+                writer.add_histogram("mask", mask, args.global_step)
             args.global_step += 1
 
         loss_epoch += loss.item()
@@ -125,14 +127,14 @@ def main(gpu, args):
 
     writer = None
     if args.nr == 0:
-        writer = SummaryWriter()
+        writer = SummaryWriter(os.path.join('runs', args.name))
 
     args.global_step = 0
     args.current_epoch = 0
     for epoch in range(args.start_epoch, args.epochs):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
-        
+
         lr = optimizer.param_groups[0]["lr"]
         loss_epoch = train(args, train_loader, model, criterion, optimizer, writer)
 

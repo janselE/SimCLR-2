@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torchvision
+import torch
 
 from simclr.modules.resnet_hacks import modify_resnet_model
 from simclr.modules.identity import Identity
@@ -26,10 +27,29 @@ class SimCLR(nn.Module):
             nn.Linear(self.n_features, projection_dim, bias=False),
         )
 
-    def forward(self, x_i, x_j):
+        self.attn = nn.Sequential(
+            nn.Linear(self.n_features, self.n_features, bias=False),
+            nn.ReLU(),
+            nn.Linear(self.n_features, self.n_features, bias=False),
+            nn.ReLU(),
+            nn.Linear(self.n_features, self.n_features, bias=False),
+        )
+
+    def forward(self, x_i, x_j, attn=False):
         h_i = self.encoder(x_i)
         h_j = self.encoder(x_j)
 
+        if attn:
+            mask = self.attn(h_i)
+            mask = torch.sigmoid(mask)
+            h_i = h_i * mask
+            h_j = h_j * mask
+
         z_i = self.projector(h_i)
         z_j = self.projector(h_j)
-        return h_i, h_j, z_i, z_j
+
+        if attn:
+            return h_i, h_j, z_i, z_j, mask
+
+        return h_i, h_j, z_i, z_j, None
+

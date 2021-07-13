@@ -128,9 +128,9 @@ def main(gpu, args):
     writer = None
     if args.nr == 0:
         if args.attn_head:
-            writer = SummaryWriter(os.path.join('runs', f"{args.mask}_{args.dataset}_{args.epochs}"))
+            writer = SummaryWriter(os.path.join('runs', f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}"))
         else:
-            writer = SummaryWriter(os.path.join('runs', f"{args.dataset}_{args.epochs}"))
+            writer = SummaryWriter(os.path.join('runs', f"{args.dataset}_{args.epochs}_{args.resnet}"))
 
     args.global_step = 0
     args.current_epoch = 0

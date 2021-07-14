@@ -130,7 +130,7 @@ def main(gpu, args):
         if args.attn_head:
             writer = SummaryWriter(os.path.join('runs', f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}"))
         else:
-            writer = SummaryWriter(os.path.join('runs', f"{args.dataset}_{args.epochs}_{args.resnet}"))
+            writer = SummaryWriter(os.path.join('runs', f"simclr_{args.dataset}_{args.epochs}_{args.resnet}"))
 
     args.global_step = 0
     args.current_epoch = 0

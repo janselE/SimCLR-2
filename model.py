@@ -32,7 +32,17 @@ def load_optimizer(args, model):
 
 
 def save_model(args, model, optimizer):
-    out = os.path.join(args.model_path, "checkpoint_{}.tar".format(args.current_epoch))
+
+    if args.attn_head:
+        path = os.path.join(args.model_path, f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}")
+    else:
+        path = os.path.join(args.model_path, f"simclr_{args.dataset}_{args.epochs}_{args.resnet}")
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    out = os.path.join(path, f"checkpoint_{args.curent_epoch}.tar")
+
 
     # To save a DataParallel model generically, save the model.module.state_dict().
     # This way, you have the flexibility to load the model any way you want to any device you want.

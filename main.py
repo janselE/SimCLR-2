@@ -14,7 +14,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 
 # SimCLR
-from simclr import SimCLR, Attn_SimCLR
+from simclr import SimCLR
+from attn_simclr import Attn_SimCLR
 from simclr.modules import NT_Xent, get_resnet
 from simclr.modules.transformations import TransformsSimCLR
 from simclr.modules.sync_batchnorm import convert_model
@@ -100,10 +101,11 @@ def main(gpu, args):
     # initialize ResNet
     if args.model == "simclr":
         encoder = get_resnet(args.resnet, pretrained=False)
+        n_features = encoder.fc.in_features  # get dimensions of fc layer
     else:
         encoder1 = get_resnet(args.resnet, pretrained=False)
         encoder2 = get_resnet(args.resnet, pretrained=False)
-    n_features = encoder.fc.in_features  # get dimensions of fc layer
+        n_features = encoder1.fc.in_features  # get dimensions of fc layer
 
     # initialize model
     if args.model == "simclr":

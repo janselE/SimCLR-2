@@ -34,7 +34,10 @@ def load_optimizer(args, model):
 def save_model(args, model, optimizer):
 
     if args.attn_head:
-        path = os.path.join(args.model_path, f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}")
+        if args.model == "attn_simclr":
+            path = os.path.join(args.model_path, f"attn_simclr_{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}")
+        else:
+            path = os.path.join(args.model_path, f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}")
     else:
         path = os.path.join(args.model_path, f"simclr_{args.dataset}_{args.epochs}_{args.resnet}")
         print(path)

@@ -10,7 +10,7 @@
 
 ##SBATCH --mem=128# Maximum amount of memory this job will be given, try to estimate this to the best of your ability. This asks for 128 GB of ram.
 
-#SBATCH --time=4-00:00:00 # this set up the days that the script is going to run
+#SBATCH --time=3-00:00:00 # this set up the days that the script is going to run
 
 # everything below this line is optional, but are nice to have quality of life things
 

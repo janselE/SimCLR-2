@@ -37,11 +37,12 @@ def save_model(args, model, optimizer):
         path = os.path.join(args.model_path, f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}")
     else:
         path = os.path.join(args.model_path, f"simclr_{args.dataset}_{args.epochs}_{args.resnet}")
+        print(path)
 
     if not os.path.exists(path):
         os.makedirs(path)
 
-    out = os.path.join(path, f"checkpoint_{args.curent_epoch}.tar")
+    out = os.path.join(path, f"checkpoint_{args.current_epoch}.tar")
 
 
     # To save a DataParallel model generically, save the model.module.state_dict().

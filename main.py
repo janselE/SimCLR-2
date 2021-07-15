@@ -136,7 +136,10 @@ def main(gpu, args):
     writer = None
     if args.nr == 0:
         if args.attn_head:
-            writer = SummaryWriter(os.path.join('runs', f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}"))
+            if args.model == "attn_simclr":
+                writer = SummaryWriter(os.path.join('runs', f"attn_simclr_{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}"))
+            else:
+                writer = SummaryWriter(os.path.join('runs', f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}"))
         else:
             writer = SummaryWriter(os.path.join('runs', f"simclr_{args.dataset}_{args.epochs}_{args.resnet}"))
 

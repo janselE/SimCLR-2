@@ -14,7 +14,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 
 # SimCLR
-from simclr import SimCLR
+from simclr import SimCLR, Attn_SimCLR
 from simclr.modules import NT_Xent, get_resnet
 from simclr.modules.transformations import TransformsSimCLR
 from simclr.modules.sync_batchnorm import convert_model
@@ -98,11 +98,19 @@ def main(gpu, args):
     )
 
     # initialize ResNet
-    encoder = get_resnet(args.resnet, pretrained=False)
+    if args.model == "simclr":
+        encoder = get_resnet(args.resnet, pretrained=False)
+    else:
+        encoder1 = get_resnet(args.resnet, pretrained=False)
+        encoder2 = get_resnet(args.resnet, pretrained=False)
     n_features = encoder.fc.in_features  # get dimensions of fc layer
 
     # initialize model
-    model = SimCLR(encoder, args.projection_dim, n_features)
+    if args.model == "simclr":
+        model = SimCLR(encoder, args.projection_dim, n_features)
+    else:
+        model = Attn_SimCLR(encoder1, encoder2, args.projection_dim, n_features)
+
     if args.reload:
         model_fp = os.path.join(
             args.model_path, "checkpoint_{}.tar".format(args.epoch_num)

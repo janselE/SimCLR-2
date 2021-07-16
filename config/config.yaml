@@ -12,6 +12,7 @@ dataset_dir: "./datasets"
 seed: 42 # sacred handles automatic seeding when passed in the config
 batch_size: 128
 image_size: 224
+crop_size: 128
 start_epoch: 0
 epochs: 50
 dataset: "CIFAR10" # STL10

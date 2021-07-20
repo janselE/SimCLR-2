@@ -8,7 +8,8 @@ class TransformsSimCLR:
     denoted x ̃i and x ̃j, which we consider as a positive pair.
     """
 
-    def __init__(self, size, crop_size):
+    def __init__(self, size, crop_size, is_training=True):
+        self.is_training=is_training
         s = 1
         color_jitter = torchvision.transforms.ColorJitter(
             0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
@@ -41,4 +42,7 @@ class TransformsSimCLR:
         )
 
     def __call__(self, x):
-        return self.train_transform(x), self.train_transform_crop(x)
+        if self.is_training:
+            return self.train_transform(x), self.train_transform_crop(x)
+        else:
+            return self.test_transform(x)

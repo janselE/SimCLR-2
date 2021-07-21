@@ -9,7 +9,7 @@ def load_optimizer(args, model):
 
     scheduler = None
     if args.optimizer == "Adam":
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)#lr=0.001, 3e-4  # TODO: LARS
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)#lr=0.001, 3e-4  # TODO: LARS
     elif args.optimizer == "LARS":
         # optimized using LARS with linear learning rate scaling
         # (i.e. LearningRate = 0.3 × BatchSize/256) and weight decay of 10−6.
@@ -33,13 +33,14 @@ def load_optimizer(args, model):
 
 def save_model(args, model, optimizer):
 
+    str_lr = str(args.lr).replace('.', '')
     if args.attn_head:
         if args.model == "attn_simclr":
-            path = os.path.join(args.model_path, f"attn_simclr_{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}")
+            path = os.path.join(args.model_path, f"attn_simclr_{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}")
         else:
-            path = os.path.join(args.model_path, f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}")
+            path = os.path.join(args.model_path, f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}")
     else:
-        path = os.path.join(args.model_path, f"simclr_{args.dataset}_{args.epochs}_{args.resnet}")
+        path = os.path.join(args.model_path, f"simclr_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}")
         print(path)
 
     if not os.path.exists(path):

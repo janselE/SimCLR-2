@@ -20,6 +20,7 @@ pretrain: True
 attn_head: True
 mask: "sigmoid"
 model: "attn_simclr"
+lr: 0.00001
 
 # model options
 resnet: "resnet50"

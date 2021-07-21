@@ -20,6 +20,7 @@ pretrain: True
 attn_head: True
 mask: "hard"
 model: "attn_simclr"
+lr: 0.00001
 
 # model options
 resnet: "resnet50"

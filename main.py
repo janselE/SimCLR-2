@@ -136,14 +136,15 @@ def main(gpu, args):
     model = model.to(args.device)
 
     writer = None
+    str_lr = str(args.lr).replace('.', '')
     if args.nr == 0:
         if args.attn_head:
             if args.model == "attn_simclr":
-                writer = SummaryWriter(os.path.join('runs', f"attn_simclr_{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}"))
+                writer = SummaryWriter(os.path.join('runs', f"attn_simclr_{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}"))
             else:
-                writer = SummaryWriter(os.path.join('runs', f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}"))
+                writer = SummaryWriter(os.path.join('runs', f"{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}"))
         else:
-            writer = SummaryWriter(os.path.join('runs', f"simclr_{args.dataset}_{args.epochs}_{args.resnet}"))
+            writer = SummaryWriter(os.path.join('runs', f"simclr_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}"))
 
     args.global_step = 0
     args.current_epoch = 0
@@ -182,7 +183,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print(args)
-    print(f'name: {args.mask}_{args.dataset}_{args.epochs}_{args.resnet}')
+    str_lr = str(args.lr).replace('.', '')
+    print(f'name: {args.mask}_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}')
 
 
     # Master address for distributed data parallel

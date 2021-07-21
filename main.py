@@ -181,6 +181,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    print(args)
+    print(f'name: {args.mask}_{args.dataset}_{args.epochs}_{args.resnet}')
+
+
     # Master address for distributed data parallel
     os.environ["MASTER_ADDR"] = "127.0.0.1"
     os.environ["MASTER_PORT"] = "8000"

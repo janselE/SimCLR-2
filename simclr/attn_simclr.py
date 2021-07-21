@@ -38,7 +38,6 @@ class Attn_SimCLR(nn.Module):
 
     def forward(self, x_i, x_j, attn=False, mask_type='sigmoid'):
         h_i = self.encoder1(x_i)
-
         if x_j == None:
             return h_i
         else:

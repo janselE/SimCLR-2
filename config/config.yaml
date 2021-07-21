@@ -14,11 +14,11 @@ batch_size: 128
 image_size: 224
 crop_size: 128
 start_epoch: 0
-epochs: 50
+epochs: 1000
 dataset: "CIFAR10" # STL10
 pretrain: True
 attn_head: True
-mask: "hard"
+mask: "sigmoid"
 model: "attn_simclr"
 
 # model options

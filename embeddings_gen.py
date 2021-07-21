@@ -47,7 +47,7 @@ model = Attn_SimCLR(encoder1, encoder2, 64, n_features)
 model_fp = os.path.join(
     "save_models/attn_simclr_hard_CIFAR10_50_resnet50", "checkpoint_50.tar"
 )
-model.load_state_dict(torch.load(model_fp ))#map_location=args.device.type))
+model.load_state_dict(torch.load(model_fp))#map_location=args.device.type))
 
 #model = model.to(args.device)
 
@@ -69,4 +69,3 @@ for step, ((x_i), l) in enumerate(train_loader):
         x_df = pd.DataFrame(result)
         x_df.to_csv("tmp.csv", index=False, header=False, mode='a')
 
-header=None

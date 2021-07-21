@@ -45,7 +45,7 @@ class Attn_SimCLR(nn.Module):
             h_j = self.encoder2(x_j)
 
         if attn:
-            mask = self.attn(h_i)
+            mask = self.attn(h_j)
             if mask_type == "softmax":
                 mask = torch.softmax(mask, 1)
             if mask_type == "sigmoid":

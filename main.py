@@ -26,12 +26,13 @@ from utils import yaml_config_hook
 from scipy.optimize import linear_sum_assignment as hungarian
 from sklearn.cluster import KMeans
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score, adjusted_mutual_info_score
+
 import torch
 
 
 def train(args, train_loader, model, criterion, optimizer, writer):
     loss_epoch = 0
-    for step, ((x_i, x_j), _) in enumerate(train_loader):
+    for step, ((x_i, x_j), labels) in enumerate(train_loader):
         optimizer.zero_grad()
         x_i = x_i.cuda(non_blocking=True)
         x_j = x_j.cuda(non_blocking=True)
@@ -60,10 +61,14 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         # calculate the metrics
         embeddings_i = KMeans(n_clusters=10).fit(h_i.detach().cpu())
         embeddings_j = KMeans(n_clusters=10).fit(h_j.detach().cpu())
-        pred_labels_i = torch.tensor(embeddings_i.labels_.astype(np.int))
-        pred_labels_j = torch.tensor(embeddings_j.labels_.astype(np.int))
 
-        print(pred_labels_j.shape)
+        pred_labels_i = embeddings_i.labels_
+        pred_labels_j = embeddings_j.labels_
+
+        nmi_j = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_j)
+        print(nmi_j)
+
+
 
         loss_epoch += loss.item()
     return loss_epoch

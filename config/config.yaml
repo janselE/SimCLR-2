@@ -19,7 +19,7 @@ dataset: "CIFAR10" # STL10
 pretrain: True
 attn_head: True
 mask: "hard"
-model: "attn_simclr"
+model: "simclr"
 lr: 0.00001
 
 # model options

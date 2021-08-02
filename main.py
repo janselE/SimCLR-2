@@ -23,6 +23,8 @@ from simclr.modules.sync_batchnorm import convert_model
 from model import load_optimizer, save_model
 from utils import yaml_config_hook
 
+from cluster_evaluation import Confusion
+
 
 def train(args, train_loader, model, criterion, optimizer, writer):
     loss_epoch = 0
@@ -51,6 +53,22 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             if args.attn_head:
                 writer.add_histogram("mask", mask, args.global_step)
             args.global_step += 1
+
+        confusion, confusion_model = Confusion(10), Confusion(10)
+        all_pred = all_prob.max(1)[1]
+        confusion_model.add(all_pred, all_labels)
+        confusion_model.optimal_assignment(args.num_classes)
+        acc_model = confusion_model.acc()
+        kmeans = cluster.KMeans(n_clusters=num_classes, random_state=args.seed)
+        embeddings = all_embeddings.cpu().numpy()
+        kmeans.fit(embeddings)
+        pred_labels = torch.tensor(kmeans.labels_.astype(np.int))
+        # clustering accuracy
+        confusion.add(pred_labels, all_labels)
+        confusion.optimal_assignment(args.num_classes)
+        acc = confusion.acc()
+        representation_cluster_score = confusion.clusterscores()
+        model_cluster_score = confusion_model.clusterscores()
 
         loss_epoch += loss.item()
     return loss_epoch

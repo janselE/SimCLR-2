@@ -184,7 +184,7 @@ if __name__ == "__main__":
 
     print(args)
     str_lr = str(args.lr).replace('.', '')
-    print(f'name: {args.mask}_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}')
+    print(f'name: {args.model}_{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}')
 
 
     # Master address for distributed data parallel

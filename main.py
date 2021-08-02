@@ -23,7 +23,10 @@ from simclr.modules.sync_batchnorm import convert_model
 from model import load_optimizer, save_model
 from utils import yaml_config_hook
 
-from cluster_evaluation import Confusion
+from scipy.optimize import linear_sum_assignment as hungarian
+from sklearn.cluster import KMeans
+from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score, adjusted_mutual_info_score
+import torch
 
 
 def train(args, train_loader, model, criterion, optimizer, writer):
@@ -54,21 +57,13 @@ def train(args, train_loader, model, criterion, optimizer, writer):
                 writer.add_histogram("mask", mask, args.global_step)
             args.global_step += 1
 
-        confusion, confusion_model = Confusion(10), Confusion(10)
-        all_pred = all_prob.max(1)[1]
-        confusion_model.add(all_pred, all_labels)
-        confusion_model.optimal_assignment(args.num_classes)
-        acc_model = confusion_model.acc()
-        kmeans = cluster.KMeans(n_clusters=num_classes, random_state=args.seed)
-        embeddings = all_embeddings.cpu().numpy()
-        kmeans.fit(embeddings)
-        pred_labels = torch.tensor(kmeans.labels_.astype(np.int))
-        # clustering accuracy
-        confusion.add(pred_labels, all_labels)
-        confusion.optimal_assignment(args.num_classes)
-        acc = confusion.acc()
-        representation_cluster_score = confusion.clusterscores()
-        model_cluster_score = confusion_model.clusterscores()
+        # calculate the metrics
+        embeddings_i = KMeans(n_clusters=10).fit(h_i.detach().cpu())
+        embeddings_j = KMeans(n_clusters=10).fit(h_j.detach().cpu())
+        pred_labels_i = torch.tensor(embeddings_i.labels_.astype(np.int))
+        pred_labels_j = torch.tensor(embeddings_j.labels_.astype(np.int))
+
+        print(pred_labels_j.shape)
 
         loss_epoch += loss.item()
     return loss_epoch

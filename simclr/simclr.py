@@ -45,6 +45,9 @@ class SimCLR(nn.Module):
 
         if attn:
             mask = self.attn(h_i)
+            print(mask)
+            print(mask.shape)
+            exit()
             if mask_type == "softmax":
                 mask = torch.softmax(mask, 1)
             if mask_type == "sigmoid":

@@ -69,6 +69,8 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         nmi_j = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_j)
         nmi = (nmi_i + nmi_i) / 2
 
+        print(nmi)
+
         writer.add_scalar("NMI/train_epoch", nmi, epoch)
 
         loss_epoch += loss.item()

@@ -67,11 +67,41 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
         nmi_i = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_i)
         nmi_j = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_j)
+        nmi = (nmi_i + nmi_j) / 2
+
+        ari_i = adjusted_rand_score(labels.detach().numpy(), pred_labels_i)
+        ari_j = adjusted_rand_score(labels.detach().numpy(), pred_labels_j)
+        ari = (ari_i + ari_j) / 2
+
+        ami_i = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_i)
+        ami_j = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_j)
+        ami = (ami_i + ami_j) / 2
+
+        writer.add_scalar("NMI/emb_train_epoch", nmi, args.global_step)
+        writer.add_scalar("ARI/emb_train_epoch", ari, args.global_step)
+        writer.add_scalar("AMI/emb_train_epoch", ami, args.global_step)
+
+        embeddings_i = KMeans(n_clusters=10).fit(z_i.detach().cpu())
+        embeddings_j = KMeans(n_clusters=10).fit(z_j.detach().cpu())
+
+        pred_labels_i = embeddings_i.labels_
+        pred_labels_j = embeddings_j.labels_
+
+        nmi_i = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_i)
+        nmi_j = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_j)
         nmi = (nmi_i + nmi_i) / 2
 
-        print(nmi)
+        ari_i = adjusted_rand_score(labels.detach().numpy(), pred_labels_i)
+        ari_j = adjusted_rand_score(labels.detach().numpy(), pred_labels_j)
+        ari = (ari_i + ari_j) / 2
 
-        writer.add_scalar("NMI/train_epoch", nmi, args.global_step)
+        ami_i = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_i)
+        ami_j = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_j)
+        ami = (ami_i + ami_j) / 2
+
+        writer.add_scalar("NMI/proj_train_epoch", nmi, args.global_step)
+        writer.add_scalar("ARI/proj_train_epoch", ari, args.global_step)
+        writer.add_scalar("AMI/proj_train_epoch", ami, args.global_step)
 
         loss_epoch += loss.item()
     return loss_epoch

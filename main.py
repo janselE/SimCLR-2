@@ -71,7 +71,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
         print(nmi)
 
-        writer.add_scalar("NMI/train_epoch", nmi, epoch)
+        writer.add_scalar("NMI/train_epoch", nmi, args.global_step)
 
         loss_epoch += loss.item()
     return loss_epoch

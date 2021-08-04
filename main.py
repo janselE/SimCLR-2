@@ -110,12 +110,17 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 def main(gpu, args):
     rank = args.nr * args.gpus + gpu
 
+
     if args.nodes > 1:
         dist.init_process_group("nccl", rank=rank, world_size=args.world_size)
         torch.cuda.set_device(gpu)
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
+
+    if args.model == "simclr":
+        args.crop_size = args.image_size
+        print(args.crop_size)
 
     if args.dataset == "STL10":
         train_dataset = torchvision.datasets.STL10(

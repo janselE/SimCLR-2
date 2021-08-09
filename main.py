@@ -178,6 +178,7 @@ def main(gpu, args):
         )
     else:
         train_sampler = None
+        test_sampler = None
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,

@@ -24,7 +24,7 @@ from model import load_optimizer, save_model
 from utils import yaml_config_hook
 
 from scipy.optimize import linear_sum_assignment as hungarian
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score, adjusted_mutual_info_score
 
 import torch
@@ -32,6 +32,12 @@ import torch
 
 def train(args, train_loader, model, criterion, optimizer, writer):
     loss_epoch = 0
+    emb_nmi = []
+    emb_ari = []
+    emb_ami = []
+    proj_nmi = []
+    proj_ari = []
+    proj_ami = []
     for step, ((x_i, x_j), labels) in enumerate(train_loader):
         optimizer.zero_grad()
         x_i = x_i.cuda(non_blocking=True)
@@ -59,8 +65,11 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             args.global_step += 1
 
         # calculate the metrics
-        embeddings_i = KMeans(n_clusters=10).fit(h_i.detach().cpu())
-        embeddings_j = KMeans(n_clusters=10).fit(h_j.detach().cpu())
+        #embeddings_i = KMeans(n_clusters=10).fit(h_i.detach().cpu())
+        #embeddings_j = KMeans(n_clusters=10).fit(h_j.detach().cpu())
+
+        embeddings_i = DBSCAN(min_samples=2).fit(h_i.detach().cpu())
+        embeddings_j = DBSCAN(min_samples=2).fit(h_j.detach().cpu())
 
         pred_labels_i = embeddings_i.labels_
         pred_labels_j = embeddings_j.labels_
@@ -68,21 +77,27 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         nmi_i = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_i)
         nmi_j = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_j)
         nmi = (nmi_i + nmi_j) / 2
+        emb_nmi.append(nmi)
 
         ari_i = adjusted_rand_score(labels.detach().numpy(), pred_labels_i)
         ari_j = adjusted_rand_score(labels.detach().numpy(), pred_labels_j)
         ari = (ari_i + ari_j) / 2
+        emb_ari.append(ari)
 
         ami_i = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_i)
         ami_j = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_j)
         ami = (ami_i + ami_j) / 2
+        emb_ami.append(ami)
 
         writer.add_scalar("NMI/emb_train_epoch", nmi, args.global_step)
         writer.add_scalar("ARI/emb_train_epoch", ari, args.global_step)
         writer.add_scalar("AMI/emb_train_epoch", ami, args.global_step)
 
-        embeddings_i = KMeans(n_clusters=10).fit(z_i.detach().cpu())
-        embeddings_j = KMeans(n_clusters=10).fit(z_j.detach().cpu())
+        #embeddings_i = KMeans(n_clusters=10).fit(z_i.detach().cpu())
+        #embeddings_j = KMeans(n_clusters=10).fit(z_j.detach().cpu())
+
+        embeddings_i = DBSCAN(min_samples=2).fit(z_i.detach().cpu())
+        embeddings_j = DBSCAN(min_samples=2).fit(z_j.detach().cpu())
 
         pred_labels_i = embeddings_i.labels_
         pred_labels_j = embeddings_j.labels_
@@ -90,21 +105,25 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         nmi_i = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_i)
         nmi_j = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_j)
         nmi = (nmi_i + nmi_i) / 2
+        proj_nmi.append(nmi)
 
         ari_i = adjusted_rand_score(labels.detach().numpy(), pred_labels_i)
         ari_j = adjusted_rand_score(labels.detach().numpy(), pred_labels_j)
         ari = (ari_i + ari_j) / 2
+        proj_ari.append(ari)
 
         ami_i = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_i)
         ami_j = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_j)
         ami = (ami_i + ami_j) / 2
+        proj_ami.append(ami)
 
         writer.add_scalar("NMI/proj_train_epoch", nmi, args.global_step)
         writer.add_scalar("ARI/proj_train_epoch", ari, args.global_step)
         writer.add_scalar("AMI/proj_train_epoch", ami, args.global_step)
 
         loss_epoch += loss.item()
-    return loss_epoch
+    metrics = {"emb_ami":emb_ami, "emb_ari":emb_ari, "emb_nmi":emb_nmi, "proj_ami":proj_ami, "proj_nmi":proj_nmi, "proj_ari":proj_ari}
+    return loss_epoch, metrics
 
 
 def main(gpu, args):
@@ -120,7 +139,7 @@ def main(gpu, args):
 
     if args.model == "simclr":
         args.crop_size = args.image_size
-        print(args.crop_size)
+    print(f"image_size are {args.image_size}, {args.crop_size}")
 
     if args.dataset == "STL10":
         train_dataset = torchvision.datasets.STL10(
@@ -129,9 +148,21 @@ def main(gpu, args):
             download=True,
             transform=TransformsSimCLR(size=args.image_size, crop_size=args.crop_size),
         )
+        test_dataset = torchvision.datasets.STL10(
+            args.dataset_dir,
+            split="unlabeled",
+            download=True,
+            transform=TransformsSimCLR(size=args.image_size, crop_size=args.crop_size, is_training=False),
+        )
     elif args.dataset == "CIFAR10":
         train_dataset = torchvision.datasets.CIFAR10(
             args.dataset_dir,
+            download=True,
+            transform=TransformsSimCLR(size=args.image_size, crop_size=args.crop_size),
+        )
+        test_dataset = torchvision.datasets.CIFAR10(
+            args.dataset_dir,
+            train=False,
             download=True,
             transform=TransformsSimCLR(size=args.image_size, crop_size=args.crop_size),
         )
@@ -141,6 +172,9 @@ def main(gpu, args):
     if args.nodes > 1:
         train_sampler = torch.utils.data.distributed.DistributedSampler(
             train_dataset, num_replicas=args.world_size, rank=rank, shuffle=True
+        )
+        test_sampler = torch.utils.data.distributed.DistributedSampler(
+            test_dataset, num_replicas=args.world_size, rank=rank, shuffle=True
         )
     else:
         train_sampler = None
@@ -152,6 +186,15 @@ def main(gpu, args):
         drop_last=True,
         num_workers=args.workers,
         sampler=train_sampler,
+    )
+
+    test_loader = torch.utils.data.DataLoader(
+        test_dataset,
+        batch_size=args.batch_size,
+        shuffle=(test_sampler is None),
+        drop_last=True,
+        num_workers=args.workers,
+        sampler=test_sampler,
     )
 
     # initialize ResNet
@@ -209,7 +252,7 @@ def main(gpu, args):
             train_sampler.set_epoch(epoch)
 
         lr = optimizer.param_groups[0]["lr"]
-        loss_epoch = train(args, train_loader, model, criterion, optimizer, writer)
+        loss_epoch, metrics = train(args, train_loader, model, criterion, optimizer, writer)
 
         if args.nr == 0 and scheduler:
             scheduler.step()
@@ -220,6 +263,10 @@ def main(gpu, args):
         if args.nr == 0:
             writer.add_scalar("Loss/train", loss_epoch / len(train_loader), epoch)
             writer.add_scalar("Misc/learning_rate", lr, epoch)
+            writer.add_scalar("NMI/emb_train", sum(metrics['emb_nmi'])/len(metrics['emb_nmi']), epoch)
+            writer.add_scalar("ARI/emb_train", sum(metrics['emb_ari'])/len(metrics['emb_ari']), epoch)
+            writer.add_scalar("AMI/emb_train", sum(metrics['emb_ami'])/len(metrics['emb_ami']), epoch)
+
             print(
                 f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}\t lr: {round(lr, 5)}"
             )

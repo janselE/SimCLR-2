@@ -55,21 +55,12 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             loss = loss.data.clone()
             dist.all_reduce(loss.div_(dist.get_world_size()))
 
-        if args.nr == 0 and step % 50 == 0:
-            print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
-
-        if args.nr == 0:
-            writer.add_scalar("Loss/train_epoch", loss.item(), args.global_step)
-            if args.attn_head:
-                writer.add_histogram("mask", mask, args.global_step)
-            args.global_step += 1
-
         # calculate the metrics
         #embeddings_i = KMeans(n_clusters=10).fit(h_i.detach().cpu())
         #embeddings_j = KMeans(n_clusters=10).fit(h_j.detach().cpu())
 
-        embeddings_i = DBSCAN(eps=0.1, min_samples=5).fit(h_i.detach().cpu())
-        embeddings_j = DBSCAN(eps=0.1, min_samples=5).fit(h_j.detach().cpu())
+        embeddings_i = DBSCAN(eps=0.3, min_samples=10).fit(h_i.detach().cpu())
+        embeddings_j = DBSCAN(eps=0.3, min_samples=10).fit(h_j.detach().cpu())
 
         pred_labels_i = embeddings_i.labels_
         pred_labels_j = embeddings_j.labels_
@@ -96,8 +87,8 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         #embeddings_i = KMeans(n_clusters=10).fit(z_i.detach().cpu())
         #embeddings_j = KMeans(n_clusters=10).fit(z_j.detach().cpu())
 
-        embeddings_i = DBSCAN(eps=0.1, min_samples=5).fit(z_i.detach().cpu())
-        embeddings_j = DBSCAN(eps=0.1, min_samples=5).fit(z_j.detach().cpu())
+        embeddings_i = DBSCAN(eps=0.3, min_samples=10).fit(z_i.detach().cpu())
+        embeddings_j = DBSCAN(eps=0.3, min_samples=10).fit(z_j.detach().cpu())
 
         pred_labels_i = embeddings_i.labels_
         pred_labels_j = embeddings_j.labels_
@@ -120,6 +111,16 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         writer.add_scalar("NMI/proj_train_epoch", nmi, args.global_step)
         writer.add_scalar("ARI/proj_train_epoch", ari, args.global_step)
         writer.add_scalar("AMI/proj_train_epoch", ami, args.global_step)
+
+        if args.nr == 0 and step % 50 == 0:
+            print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
+
+        if args.nr == 0:
+            writer.add_scalar("Loss/train_epoch", loss.item(), args.global_step)
+            if args.attn_head:
+                writer.add_histogram("mask", mask, args.global_step)
+            args.global_step += 1
+
 
         loss_epoch += loss.item()
     metrics = {"emb_ami":emb_ami, "emb_ari":emb_ari, "emb_nmi":emb_nmi, "proj_ami":proj_ami, "proj_nmi":proj_nmi, "proj_ari":proj_ari}

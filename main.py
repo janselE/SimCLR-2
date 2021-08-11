@@ -68,8 +68,8 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         #embeddings_i = KMeans(n_clusters=10).fit(h_i.detach().cpu())
         #embeddings_j = KMeans(n_clusters=10).fit(h_j.detach().cpu())
 
-        embeddings_i = DBSCAN(min_samples=2).fit(h_i.detach().cpu())
-        embeddings_j = DBSCAN(min_samples=2).fit(h_j.detach().cpu())
+        embeddings_i = DBSCAN(eps=0.1, min_samples=5).fit(h_i.detach().cpu())
+        embeddings_j = DBSCAN(eps=0.1, min_samples=5).fit(h_j.detach().cpu())
 
         pred_labels_i = embeddings_i.labels_
         pred_labels_j = embeddings_j.labels_
@@ -96,8 +96,8 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         #embeddings_i = KMeans(n_clusters=10).fit(z_i.detach().cpu())
         #embeddings_j = KMeans(n_clusters=10).fit(z_j.detach().cpu())
 
-        embeddings_i = DBSCAN(min_samples=2).fit(z_i.detach().cpu())
-        embeddings_j = DBSCAN(min_samples=2).fit(z_j.detach().cpu())
+        embeddings_i = DBSCAN(eps=0.1, min_samples=5).fit(z_i.detach().cpu())
+        embeddings_j = DBSCAN(eps=0.1, min_samples=5).fit(z_j.detach().cpu())
 
         pred_labels_i = embeddings_i.labels_
         pred_labels_j = embeddings_j.labels_

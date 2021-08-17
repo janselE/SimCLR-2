@@ -268,6 +268,9 @@ def main(gpu, args):
             writer.add_scalar("NMI/emb_train", sum(metrics['emb_nmi'])/len(metrics['emb_nmi']), epoch)
             writer.add_scalar("ARI/emb_train", sum(metrics['emb_ari'])/len(metrics['emb_ari']), epoch)
             writer.add_scalar("AMI/emb_train", sum(metrics['emb_ami'])/len(metrics['emb_ami']), epoch)
+            writer.add_scalar("NMI/proj_train", sum(metrics['proj_nmi'])/len(metrics['proj_nmi']), epoch)
+            writer.add_scalar("ARI/proj_train", sum(metrics['proj_ari'])/len(metrics['proj_ari']), epoch)
+            writer.add_scalar("AMI/proj_train", sum(metrics['proj_ami'])/len(metrics['proj_ami']), epoch)
 
             print(
                 f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}\t lr: {round(lr, 5)}"

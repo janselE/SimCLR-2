@@ -61,12 +61,14 @@ model.load_state_dict(torch.load(model_fp))#map_location=args.device.type))
 
 x = None
 for step, ((x_i), l) in enumerate(train_loader):
-        h_i = model(x_i, None)
-        x = h_i.detach().numpy()
-        y = l.detach().numpy()
-        y = np.expand_dims(y, axis=1)
-        result = np.concatenate([y, x], 1)
-        x_df = pd.DataFrame(result)
-        x_df.to_csv("attn_simclr_sigmoid.csv", index=False, header=False, mode='a')
+    if step % 10 == 0:
+        print(step)
+    h_i = model(x_i, None)
+    x = h_i.detach().numpy()
+    y = l.detach().numpy()
+    y = np.expand_dims(y, axis=1)
+    result = np.concatenate([y, x], 1)
+    x_df = pd.DataFrame(result)
+    x_df.to_csv("attn_simclr_sigmoid.csv", index=False, header=False, mode='a')
 
 

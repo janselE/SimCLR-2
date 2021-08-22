@@ -219,6 +219,7 @@ def main(gpu, args):
             args.model_path, "checkpoint_{}.tar".format(args.epoch_num)
         )
         model.load_state_dict(torch.load(model_fp, map_location=args.device.type))
+    print("device type:", args.device.type)
     model = model.to(args.device)
 
     # optimizer / loss

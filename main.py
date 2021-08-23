@@ -95,7 +95,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
         nmi_i = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_i)
         nmi_j = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_j)
-        nmi = (nmi_i + nmi_i) / 2
+        nmi = (nmi_i + nmi_j) / 2
         proj_nmi.append(nmi)
 
         ari_i = adjusted_rand_score(labels.detach().numpy(), pred_labels_i)

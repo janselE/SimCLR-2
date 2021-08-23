@@ -87,33 +87,33 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         writer.add_scalar("ARI/emb_train_epoch", ari, args.global_step)
         writer.add_scalar("AMI/emb_train_epoch", ami, args.global_step)
 
-        embeddings_i = KMeans(n_clusters=10).fit(z_i.detach().cpu())
-        embeddings_j = KMeans(n_clusters=10).fit(z_j.detach().cpu())
+        #embeddings_i = KMeans(n_clusters=10).fit(z_i.detach().cpu())
+        #embeddings_j = KMeans(n_clusters=10).fit(z_j.detach().cpu())
 
-        #embeddings_i = DBSCAN(eps=0.1, min_samples=10).fit(z_i.detach().cpu())
-        #embeddings_j = DBSCAN(eps=0.1, min_samples=10).fit(z_j.detach().cpu())
+        ##embeddings_i = DBSCAN(eps=0.1, min_samples=10).fit(z_i.detach().cpu())
+        ##embeddings_j = DBSCAN(eps=0.1, min_samples=10).fit(z_j.detach().cpu())
 
-        pred_labels_i = embeddings_i.labels_
-        pred_labels_j = embeddings_j.labels_
+        #pred_labels_i = embeddings_i.labels_
+        #pred_labels_j = embeddings_j.labels_
 
-        nmi_i = normalized_mutual_info_score(all_labels, pred_labels_i)
-        nmi_j = normalized_mutual_info_score(all_labels, pred_labels_j)
-        nmi = (nmi_i + nmi_j) / 2
-        proj_nmi.append(nmi)
+        #nmi_i = normalized_mutual_info_score(all_labels, pred_labels_i)
+        #nmi_j = normalized_mutual_info_score(all_labels, pred_labels_j)
+        #nmi = (nmi_i + nmi_j) / 2
+        #proj_nmi.append(nmi)
 
-        ari_i = adjusted_rand_score(all_labels, pred_labels_i)
-        ari_j = adjusted_rand_score(all_labels, pred_labels_j)
-        ari = (ari_i + ari_j) / 2
-        proj_ari.append(ari)
+        #ari_i = adjusted_rand_score(all_labels, pred_labels_i)
+        #ari_j = adjusted_rand_score(all_labels, pred_labels_j)
+        #ari = (ari_i + ari_j) / 2
+        #proj_ari.append(ari)
 
-        ami_i = adjusted_mutual_info_score(all_labels, pred_labels_i)
-        ami_j = adjusted_mutual_info_score(all_labels, pred_labels_j)
-        ami = (ami_i + ami_j) / 2
-        proj_ami.append(ami)
+        #ami_i = adjusted_mutual_info_score(all_labels, pred_labels_i)
+        #ami_j = adjusted_mutual_info_score(all_labels, pred_labels_j)
+        #ami = (ami_i + ami_j) / 2
+        #proj_ami.append(ami)
 
-        writer.add_scalar("NMI/proj_train_epoch", nmi, args.global_step)
-        writer.add_scalar("ARI/proj_train_epoch", ari, args.global_step)
-        writer.add_scalar("AMI/proj_train_epoch", ami, args.global_step)
+        #writer.add_scalar("NMI/proj_train_epoch", nmi, args.global_step)
+        #writer.add_scalar("ARI/proj_train_epoch", ari, args.global_step)
+        #writer.add_scalar("AMI/proj_train_epoch", ami, args.global_step)
 
         if args.nr == 0 and step % 50 == 0:
             print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
@@ -126,7 +126,8 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
 
         loss_epoch += loss.item()
-    metrics = {"emb_ami":emb_ami, "emb_ari":emb_ari, "emb_nmi":emb_nmi, "proj_ami":proj_ami, "proj_nmi":proj_nmi, "proj_ari":proj_ari}
+    metrics = {"emb_ami":emb_ami, "emb_ari":emb_ari, "emb_nmi":emb_nmi}
+    #metrics = {"emb_ami":emb_ami, "emb_ari":emb_ari, "emb_nmi":emb_nmi, "proj_ami":proj_ami, "proj_nmi":proj_nmi, "proj_ari":proj_ari}
     return loss_epoch, metrics
 
 
@@ -272,9 +273,9 @@ def main(gpu, args):
             writer.add_scalar("NMI/emb_train", sum(metrics['emb_nmi'])/len(metrics['emb_nmi']), epoch)
             writer.add_scalar("ARI/emb_train", sum(metrics['emb_ari'])/len(metrics['emb_ari']), epoch)
             writer.add_scalar("AMI/emb_train", sum(metrics['emb_ami'])/len(metrics['emb_ami']), epoch)
-            writer.add_scalar("NMI/proj_train", sum(metrics['proj_nmi'])/len(metrics['proj_nmi']), epoch)
-            writer.add_scalar("ARI/proj_train", sum(metrics['proj_ari'])/len(metrics['proj_ari']), epoch)
-            writer.add_scalar("AMI/proj_train", sum(metrics['proj_ami'])/len(metrics['proj_ami']), epoch)
+            #writer.add_scalar("NMI/proj_train", sum(metrics['proj_nmi'])/len(metrics['proj_nmi']), epoch)
+            #writer.add_scalar("ARI/proj_train", sum(metrics['proj_ari'])/len(metrics['proj_ari']), epoch)
+            #writer.add_scalar("AMI/proj_train", sum(metrics['proj_ami'])/len(metrics['proj_ami']), epoch)
 
             print(
                 f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}\t lr: {round(lr, 5)}"

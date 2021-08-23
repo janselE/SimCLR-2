@@ -56,7 +56,8 @@ model.load_state_dict(torch.load(model_fp))#map_location=args.device.type))
 #criterion = NT_Xent(args.batch_size, args.temperature, args.world_size)
 
 
-#model = model.to(args.device)
+#model = model.to('cuda')
+
 
 
 x = None
@@ -70,5 +71,6 @@ for step, ((x_i), l) in enumerate(train_loader):
     result = np.concatenate([y, x], 1)
     x_df = pd.DataFrame(result)
     x_df.to_csv("attn_simclr_sigmoid.csv", index=False, header=False, mode='a')
+    exit()
 
 

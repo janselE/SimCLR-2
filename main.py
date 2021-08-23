@@ -134,6 +134,8 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 def main(gpu, args):
     rank = args.nr * args.gpus + gpu
 
+    print("pytorch version:", torch.__version__)
+
 
     if args.nodes > 1:
         dist.init_process_group("nccl", rank=rank, world_size=args.world_size)

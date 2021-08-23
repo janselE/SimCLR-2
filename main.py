@@ -65,18 +65,21 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         pred_labels_i = embeddings_i.labels_
         pred_labels_j = embeddings_j.labels_
 
-        nmi_i = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_i)
-        nmi_j = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_j)
+        # produce a numpy version of the labels
+        all_labels = labels.detach().numpy()
+
+        nmi_i = normalized_mutual_info_score(all_labels, pred_labels_i)
+        nmi_j = normalized_mutual_info_score(all_labels, pred_labels_j)
         nmi = (nmi_i + nmi_j) / 2
         emb_nmi.append(nmi)
 
-        ari_i = adjusted_rand_score(labels.detach().numpy(), pred_labels_i)
-        ari_j = adjusted_rand_score(labels.detach().numpy(), pred_labels_j)
+        ari_i = adjusted_rand_score(all_labels, pred_labels_i)
+        ari_j = adjusted_rand_score(all_labels, pred_labels_j)
         ari = (ari_i + ari_j) / 2
         emb_ari.append(ari)
 
-        ami_i = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_i)
-        ami_j = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_j)
+        ami_i = adjusted_mutual_info_score(all_labels, pred_labels_i)
+        ami_j = adjusted_mutual_info_score(all_labels, pred_labels_j)
         ami = (ami_i + ami_j) / 2
         emb_ami.append(ami)
 
@@ -93,18 +96,18 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         pred_labels_i = embeddings_i.labels_
         pred_labels_j = embeddings_j.labels_
 
-        nmi_i = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_i)
-        nmi_j = normalized_mutual_info_score(labels.detach().numpy(), pred_labels_j)
+        nmi_i = normalized_mutual_info_score(all_labels, pred_labels_i)
+        nmi_j = normalized_mutual_info_score(all_labels, pred_labels_j)
         nmi = (nmi_i + nmi_j) / 2
         proj_nmi.append(nmi)
 
-        ari_i = adjusted_rand_score(labels.detach().numpy(), pred_labels_i)
-        ari_j = adjusted_rand_score(labels.detach().numpy(), pred_labels_j)
+        ari_i = adjusted_rand_score(all_labels, pred_labels_i)
+        ari_j = adjusted_rand_score(all_labels, pred_labels_j)
         ari = (ari_i + ari_j) / 2
         proj_ari.append(ari)
 
-        ami_i = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_i)
-        ami_j = adjusted_mutual_info_score(labels.detach().numpy(), pred_labels_j)
+        ami_i = adjusted_mutual_info_score(all_labels, pred_labels_i)
+        ami_j = adjusted_mutual_info_score(all_labels, pred_labels_j)
         ami = (ami_i + ami_j) / 2
         proj_ami.append(ami)
 

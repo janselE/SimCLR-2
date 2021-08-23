@@ -30,10 +30,11 @@ class Attn_SimCLR(nn.Module):
 
         self.attn = nn.Sequential(
             nn.Linear(self.n_features, self.n_features, bias=False),
-            nn.ReLU(),
+            nn.SiLU(),
             nn.Linear(self.n_features, self.n_features, bias=False),
-            nn.ReLU(),
+            nn.SiLU(),
             nn.Linear(self.n_features, self.n_features, bias=False),
+            nn.Sigmoid()
         )
 
     def forward(self, x_i, x_j, attn=False, mask_type='sigmoid'):

@@ -42,17 +42,18 @@ def gen_embeddings(args, test_loader, model):
         path = f"simclr_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}"
 
     x = None
-    for step, ((x_i), l) in enumerate(test_loader):
-        if step % 10 == 0:
-            print(step)
-        x_i = x_i.cuda(non_blocking=True)
-        h_i = model(x_i, None)
-        x = h_i.cpu().numpy()
-        y = l.cpu().numpy()
-        y = np.expand_dims(y, axis=1)
-        result = np.concatenate([y, x], 1)
-        x_df = pd.DataFrame(result)
-        x_df.to_csv(f"embeddings/{path}.csv", index=False, header=False, mode='a')
+    with torch.no_grad():
+        for step, ((x_i), l) in enumerate(test_loader):
+            if step % 10 == 0:
+                print(step)
+            x_i = x_i.cuda(non_blocking=True)
+            h_i = model(x_i, None)
+            x = h_i.cpu().numpy()
+            y = l.cpu().numpy()
+            y = np.expand_dims(y, axis=1)
+            result = np.concatenate([y, x], 1)
+            x_df = pd.DataFrame(result)
+            x_df.to_csv(f"embeddings/{path}.csv", index=False, header=False, mode='a')
 
 def train(args, train_loader, model, criterion, optimizer, writer):
     loss_epoch = 0

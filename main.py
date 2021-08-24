@@ -194,7 +194,7 @@ def main(gpu, args):
             args.dataset_dir,
             train=False,
             download=True,
-            transform=TransformsSimCLR(size=args.image_size, crop_size=args.crop_size),
+            transform=TransformsSimCLR(size=args.image_size, crop_size=args.crop_size, is_training=False),
         )
     else:
         raise NotImplementedError

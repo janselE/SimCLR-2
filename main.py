@@ -281,36 +281,36 @@ def main(gpu, args):
 
     args.global_step = 0
     args.current_epoch = 0
-    #for epoch in range(args.start_epoch, args.epochs):
-    #    if train_sampler is not None:
-    #        train_sampler.set_epoch(epoch)
+    for epoch in range(args.start_epoch, args.epochs):
+        if train_sampler is not None:
+            train_sampler.set_epoch(epoch)
 
-    #    lr = optimizer.param_groups[0]["lr"]
-    #    loss_epoch, metrics = train(args, train_loader, model, criterion, optimizer, writer)
+        lr = optimizer.param_groups[0]["lr"]
+        loss_epoch, metrics = train(args, train_loader, model, criterion, optimizer, writer)
 
-    #    if args.nr == 0 and scheduler:
-    #        scheduler.step()
+        if args.nr == 0 and scheduler:
+            scheduler.step()
 
-    #    if args.nr == 0 and epoch % 10 == 0:
-    #        save_model(args, model, optimizer)
+        if args.nr == 0 and epoch % 10 == 0:
+            save_model(args, model, optimizer)
 
-    #    if args.nr == 0:
-    #        writer.add_scalar("Loss/train", loss_epoch / len(train_loader), epoch)
-    #        writer.add_scalar("Misc/learning_rate", lr, epoch)
-    #        writer.add_scalar("NMI/emb_train", sum(metrics['emb_nmi'])/len(metrics['emb_nmi']), epoch)
-    #        writer.add_scalar("ARI/emb_train", sum(metrics['emb_ari'])/len(metrics['emb_ari']), epoch)
-    #        writer.add_scalar("AMI/emb_train", sum(metrics['emb_ami'])/len(metrics['emb_ami']), epoch)
-    #        #writer.add_scalar("NMI/proj_train", sum(metrics['proj_nmi'])/len(metrics['proj_nmi']), epoch)
-    #        #writer.add_scalar("ARI/proj_train", sum(metrics['proj_ari'])/len(metrics['proj_ari']), epoch)
-    #        #writer.add_scalar("AMI/proj_train", sum(metrics['proj_ami'])/len(metrics['proj_ami']), epoch)
+        if args.nr == 0:
+            writer.add_scalar("Loss/train", loss_epoch / len(train_loader), epoch)
+            writer.add_scalar("Misc/learning_rate", lr, epoch)
+            writer.add_scalar("NMI/emb_train", sum(metrics['emb_nmi'])/len(metrics['emb_nmi']), epoch)
+            writer.add_scalar("ARI/emb_train", sum(metrics['emb_ari'])/len(metrics['emb_ari']), epoch)
+            writer.add_scalar("AMI/emb_train", sum(metrics['emb_ami'])/len(metrics['emb_ami']), epoch)
+            #writer.add_scalar("NMI/proj_train", sum(metrics['proj_nmi'])/len(metrics['proj_nmi']), epoch)
+            #writer.add_scalar("ARI/proj_train", sum(metrics['proj_ari'])/len(metrics['proj_ari']), epoch)
+            #writer.add_scalar("AMI/proj_train", sum(metrics['proj_ami'])/len(metrics['proj_ami']), epoch)
 
-    #        print(
-    #            f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}\t lr: {round(lr, 5)}"
-    #        )
-    #        args.current_epoch += 1
+            print(
+                f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}\t lr: {round(lr, 5)}"
+            )
+            args.current_epoch += 1
 
-    ### end training
-    #save_model(args, model, optimizer)
+    ## end training
+    save_model(args, model, optimizer)
     gen_embeddings(args, test_loader, model)
 
 

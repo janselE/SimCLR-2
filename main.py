@@ -45,6 +45,7 @@ def gen_embeddings(args, test_loader, model):
     for step, ((x_i), l) in enumerate(test_loader):
         if step % 10 == 0:
             print(step)
+        x_i = x_i.cuda(non_blocking=True)
         h_i = model(x_i, None)
         x = h_i.detach().numpy()
         y = l.detach().numpy()

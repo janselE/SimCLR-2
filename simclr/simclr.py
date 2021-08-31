@@ -29,11 +29,17 @@ class SimCLR(nn.Module):
 
         self.attn = nn.Sequential(
             nn.Linear(self.n_features, self.n_features, bias=False),
-            nn.ReLU(),
+            nn.SiLU(),
             nn.Linear(self.n_features, self.n_features, bias=False),
-            nn.ReLU(),
+            nn.SiLU(),
             nn.Linear(self.n_features, self.n_features, bias=False),
+            nn.Sigmoid()
         )
+            #nn.Linear(self.n_features, self.n_features, bias=False),
+            #nn.ReLU(),
+            #nn.Linear(self.n_features, self.n_features, bias=False),
+            #nn.ReLU(),
+            #nn.Linear(self.n_features, self.n_features, bias=False),
 
     def forward(self, x_i, x_j, attn=False, mask_type='sigmoid'):
         h_i = self.encoder(x_i)
@@ -45,9 +51,8 @@ class SimCLR(nn.Module):
 
         if attn:
             mask = self.attn(h_i)
-            print(mask)
-            print(mask.shape)
-            exit()
+            if mask_type == "hard":
+                mask = torch.round(mask)
             if mask_type == "softmax":
                 mask = torch.softmax(mask, 1)
             if mask_type == "sigmoid":

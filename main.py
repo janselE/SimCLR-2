@@ -31,7 +31,6 @@ from sklearn.metrics.cluster import (
     adjusted_mutual_info_score,
 )
 
-import torch
 import pandas as pd
 
 
@@ -71,7 +70,6 @@ def train(args, train_loader, model, criterion, optimizer, writer):
     for step, (elements, labels) in enumerate(train_loader):
         if args.attn_head:
             x_i, x_j, x_k, x_x = elements
-            # print(x_i.shape, x_j.shape, x_k.shape, x_x.shape)
         else:
             x_i, x_j = elements
 
@@ -82,7 +80,7 @@ def train(args, train_loader, model, criterion, optimizer, writer):
         h_i, h_j, z_i, z_j, mask = model(x_i, x_j, args.attn_head, args.mask)
         loss = criterion(z_i, z_j).to(args.device)
 
-        if args.attn_head:
+        if args.attn_head and args.model == "simclr":
             x_k = x_k.cuda(non_blocking=True)
             x_x = x_x.cuda(non_blocking=True)
 
@@ -94,16 +92,20 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             _, _, z_k, z_x, mask = model(x_i, x_x, args.attn_head, args.mask)
             loss = criterion(z_k, z_x).to(args.device) + loss
 
+            # another combination with mask (I forgot this one)
+            _, _, z_k, z_x, mask = model(x_k, x_j, args.attn_head, args.mask)
+            loss = criterion(z_k, z_x).to(args.device) + loss
+
             # no mask (normal simclr they have the same shape)
             _, _, z_k, z_x, _ = model(x_i, x_k, False, args.mask)
             loss = criterion(z_k, z_x).to(args.device) + loss
 
-            # no mask (normal simclr they have the same shape)
+            # no mask (crop simclr they have the same shape)
             _, _, z_k, z_x, _ = model(x_j, x_x, False, args.mask)
             loss = criterion(z_k, z_x).to(args.device) + loss
 
             # loss = criterion(z_k, z_x).to(args.device) + loss
-            # loss = criterion(z_i, z_x).to(args.device) + loss
+            # loss = criterion(z_i, z_x).to(args.device) + logs
             # loss = criterion(z_i, z_k).to(args.device) + loss
             # loss = criterion(z_k, z_j).to(args.device) + loss
             # loss = criterion(z_j, z_x).to(args.device) + loss

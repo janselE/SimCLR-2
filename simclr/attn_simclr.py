@@ -48,8 +48,6 @@ class Attn_SimCLR(nn.Module):
             mask = self.attn(h_j)
             if mask_type == "hard":
                 mask = torch.round(mask)
-                #mask[mask > 0.5] = 1
-                #mask[mask <= 0.5] = 0
             if mask_type == "softmax":
                 mask = torch.softmax(mask, 1)
             if mask_type == "sigmoid":

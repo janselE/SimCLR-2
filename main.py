@@ -23,8 +23,12 @@ from simclr.modules.sync_batchnorm import convert_model
 from model import load_optimizer, save_model
 from utils import yaml_config_hook
 
-from scipy.optimize import linear_sum_assignment as hungarian
-from sklearn.cluster import KMeans, DBSCAN
+# Concat dataset
+from concat_dataset import ConcatDataset
+
+# from scipy.optimize import linear_sum_assignment as hungarian
+# from sklearn.cluster import KMeans, DBSCAN
+from sklearn.cluster import KMeans
 from sklearn.metrics.cluster import (
     normalized_mutual_info_score,
     adjusted_rand_score,
@@ -32,6 +36,52 @@ from sklearn.metrics.cluster import (
 )
 
 import pandas as pd
+
+
+def get_datasets(args, data):
+    if data == "STL10":
+        train_dataset = torchvision.datasets.STL10(
+            args.dataset_dir,
+            split="unlabeled",
+            download=True,
+            transform=TransformsSimCLR(
+                size=args.image_size, crop_size=args.crop_size, attn_head=args.attn_head
+            ),
+        )
+        test_dataset = torchvision.datasets.STL10(
+            args.dataset_dir,
+            split="unlabeled",
+            download=True,
+            transform=TransformsSimCLR(
+                size=args.image_size,
+                crop_size=args.crop_size,
+                is_training=False,
+                attn_head=args.attn_head,
+            ),
+        )
+    elif data == "CIFAR10":
+        train_dataset = torchvision.datasets.CIFAR10(
+            args.dataset_dir,
+            download=True,
+            transform=TransformsSimCLR(
+                size=args.image_size, crop_size=args.crop_size, attn_head=args.attn_head
+            ),
+        )
+
+        test_dataset = torchvision.datasets.CIFAR10(
+            args.dataset_dir,
+            train=False,
+            download=True,
+            transform=TransformsSimCLR(
+                size=args.image_size,
+                crop_size=args.crop_size,
+                is_training=False,
+                attn_head=args.attn_head,
+            ),
+        )
+    else:
+        raise NotImplementedError
+    return train_dataset, test_dataset
 
 
 def gen_embeddings(args, test_loader, model):
@@ -64,14 +114,20 @@ def train(args, train_loader, model, criterion, optimizer, writer):
     emb_nmi = []
     emb_ari = []
     emb_ami = []
-    proj_nmi = []
-    proj_ari = []
-    proj_ami = []
-    for step, (elements, labels) in enumerate(train_loader):
+
+    for step, (elements) in enumerate(train_loader):
+        for e in elements:
+            print(type(e))
+            print(len(e))
+            if args.attn_head:
+                x_i, x_j, x_k, x_x = e
+            else:
+                x_i, x_j = elements
         if args.attn_head:
             x_i, x_j, x_k, x_x = elements
         else:
             x_i, x_j = elements
+        exit()
 
         optimizer.zero_grad()
         x_i = x_i.cuda(non_blocking=True)
@@ -103,14 +159,6 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             # no mask (crop simclr they have the same shape)
             _, _, z_k, z_x, _ = model(x_j, x_x, False, args.mask)
             loss = criterion(z_k, z_x).to(args.device) + loss
-
-            # loss = criterion(z_k, z_x).to(args.device) + loss
-            # loss = criterion(z_i, z_x).to(args.device) + logs
-            # loss = criterion(z_i, z_k).to(args.device) + loss
-            # loss = criterion(z_k, z_j).to(args.device) + loss
-            # loss = criterion(z_j, z_x).to(args.device) + loss
-
-        # positive pair, with encoding
 
         loss.backward()
 
@@ -180,61 +228,39 @@ def main(gpu, args):
         args.crop_size = args.image_size
     print(f"image_size are {args.image_size}, {args.crop_size}")
 
-    if args.dataset == "STL10":
-        train_dataset = torchvision.datasets.STL10(
-            args.dataset_dir,
-            split="unlabeled",
-            download=True,
-            transform=TransformsSimCLR(
-                size=args.image_size, crop_size=args.crop_size, attn_head=args.attn_head
-            ),
-        )
-        test_dataset = torchvision.datasets.STL10(
-            args.dataset_dir,
-            split="unlabeled",
-            download=True,
-            transform=TransformsSimCLR(
-                size=args.image_size,
-                crop_size=args.crop_size,
-                is_training=False,
-                attn_head=args.attn_head,
-            ),
-        )
-    elif args.dataset == "CIFAR10":
-        train_dataset = torchvision.datasets.CIFAR10(
-            args.dataset_dir,
-            download=True,
-            transform=TransformsSimCLR(
-                size=args.image_size, crop_size=args.crop_size, attn_head=args.attn_head
-            ),
-        )
-        test_dataset = torchvision.datasets.CIFAR10(
-            args.dataset_dir,
-            train=False,
-            download=True,
-            transform=TransformsSimCLR(
-                size=args.image_size,
-                crop_size=args.crop_size,
-                is_training=False,
-                attn_head=args.attn_head,
-            ),
-        )
-    else:
-        raise NotImplementedError
+    all_datasets_train = []
+    all_datasets_test = []
+    for data in args.dataset:
+        train_dataset, test_dataset = get_datasets(args, data)
+        all_datasets_train.append(train_dataset)
+        all_datasets_test.append(test_dataset)
 
-    if args.nodes > 1:
+    if args.nodes > 1 and len(args.dataset) == 1:
         train_sampler = torch.utils.data.distributed.DistributedSampler(
-            train_dataset, num_replicas=args.world_size, rank=rank, shuffle=True
+            all_datasets_train[0], num_replicas=args.world_size, rank=rank, shuffle=True
         )
         test_sampler = torch.utils.data.distributed.DistributedSampler(
-            test_dataset, num_replicas=args.world_size, rank=rank, shuffle=True
+            all_datasets_test[0], num_replicas=args.world_size, rank=rank, shuffle=True
+        )
+    elif args.nodes > 1 and len(args.dataset) > 1:
+        concat_train = ConcatDataset(tuple(all_datasets_train))
+        concat_test = ConcatDataset(tuple(all_datasets_test))
+
+        train_sampler = torch.utils.data.distributed.DistributedSampler(
+            concat_train, num_replicas=args.world_size, rank=rank, shuffle=True
+        )
+        test_sampler = torch.utils.data.distributed.DistributedSampler(
+            concat_train, num_replicas=args.world_size, rank=rank, shuffle=True
         )
     else:
         train_sampler = None
         test_sampler = None
 
+    concat_train = ConcatDataset(tuple(all_datasets_train))
+    concat_test = ConcatDataset(tuple(all_datasets_test))
+
     train_loader = torch.utils.data.DataLoader(
-        train_dataset,
+        concat_train,
         batch_size=args.batch_size,
         shuffle=(train_sampler is None),
         drop_last=True,
@@ -243,7 +269,7 @@ def main(gpu, args):
     )
 
     test_loader = torch.utils.data.DataLoader(
-        test_dataset,
+        concat_test,
         batch_size=args.batch_size,
         shuffle=(test_sampler is None),
         drop_last=True,

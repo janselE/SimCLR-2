@@ -1,8 +1,6 @@
 import torch.nn as nn
-import torchvision
 import torch
 
-from simclr.modules.resnet_hacks import modify_resnet_model
 from simclr.modules.identity import Identity
 
 
@@ -33,19 +31,16 @@ class SimCLR(nn.Module):
             nn.Linear(self.n_features, self.n_features, bias=False),
             nn.SiLU(),
             nn.Linear(self.n_features, self.n_features, bias=False),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
-            #nn.Linear(self.n_features, self.n_features, bias=False),
-            #nn.ReLU(),
-            #nn.Linear(self.n_features, self.n_features, bias=False),
-            #nn.ReLU(),
-            #nn.Linear(self.n_features, self.n_features, bias=False),
 
-    def forward(self, x_i, x_j, attn=False, mask_type='sigmoid'):
+    def forward(self, x_i, x_j, attn=False, mask_type="sigmoid"):
         h_i = self.encoder(x_i)
+
         # for evaluation
         if x_j == None:
             return h_i
+
         else:
             h_j = self.encoder(x_j)
 

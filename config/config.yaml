@@ -14,8 +14,9 @@ batch_size: 16
 image_size: 224
 crop_size: 128
 start_epoch: 0
-epochs: 996
-dataset: "CIFAR10" # STL10
+epochs: 990
+#dataset: ["CIFAR10","STL10"] # STL10
+dataset: ["CIFAR10"]
 pretrain: True
 attn_head: True
 mask: "hard"

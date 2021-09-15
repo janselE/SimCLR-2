@@ -47,13 +47,13 @@ class TransformsSimCLR:
 
     def __call__(self, x):
         if self.is_training:
-            if self.attn_head:
-                return (
-                    self.train_transform(x),
-                    self.train_transform_crop(x),
-                    self.train_transform(x),
-                    self.train_transform_crop(x),
-                )
+            # if self.attn_head:
+            #    return (
+            #        self.train_transform(x),
+            #        self.train_transform_crop(x),
+            #        self.train_transform(x),
+            #        self.train_transform_crop(x),
+            #    )
             return self.train_transform(x), self.train_transform_crop(x)
         else:
             return self.test_transform(x)

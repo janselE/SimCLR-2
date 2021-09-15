@@ -117,96 +117,98 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
     for step, (elements) in enumerate(train_loader):
         for e in elements:
-            print(type(e))
-            print(len(e))
-            if args.attn_head:
-                x_i, x_j, x_k, x_x = e
-            else:
-                x_i, x_j = elements
-        if args.attn_head:
-            x_i, x_j, x_k, x_x = elements
-        else:
-            x_i, x_j = elements
-        exit()
+            dinput, labels = e
+            # if args.attn_head:
+            #    x_i, x_j, x_k, x_x = dinput
+            # else:
+            #    x_i, x_j = dinput
+            x_i, x_j = dinput
 
-        optimizer.zero_grad()
-        x_i = x_i.cuda(non_blocking=True)
-        x_j = x_j.cuda(non_blocking=True)
+            # if args.attn_head:
+            #    x_i, x_j, x_k, x_x = elements
+            # else:
+            #    x_i, x_j = elements
+            # exit()
 
-        h_i, h_j, z_i, z_j, mask = model(x_i, x_j, args.attn_head, args.mask)
-        loss = criterion(z_i, z_j).to(args.device)
+            optimizer.zero_grad()
+            x_i = x_i.cuda(non_blocking=True)
+            x_j = x_j.cuda(non_blocking=True)
 
-        if args.attn_head and args.model == "simclr":
-            x_k = x_k.cuda(non_blocking=True)
-            x_x = x_x.cuda(non_blocking=True)
+            h_i, h_j, z_i, z_j, mask = model(x_i, x_j, args.attn_head, args.mask)
+            loss = criterion(z_i, z_j).to(args.device)
 
-            # second sample
-            _, _, z_k, z_x, mask = model(x_k, x_x, args.attn_head, args.mask)
-            loss = criterion(z_k, z_x).to(args.device) + loss
+            # this is for the second experiment I was testing
+            # if args.attn_head and args.model == "simclr":
+            #    x_k = x_k.cuda(non_blocking=True)
+            #    x_x = x_x.cuda(non_blocking=True)
 
-            # another combination with mask
-            _, _, z_k, z_x, mask = model(x_i, x_x, args.attn_head, args.mask)
-            loss = criterion(z_k, z_x).to(args.device) + loss
+            #    # second sample
+            #    _, _, z_k, z_x, mask = model(x_k, x_x, args.attn_head, args.mask)
+            #    loss = criterion(z_k, z_x).to(args.device) + loss
 
-            # another combination with mask (I forgot this one)
-            _, _, z_k, z_x, mask = model(x_k, x_j, args.attn_head, args.mask)
-            loss = criterion(z_k, z_x).to(args.device) + loss
+            #    # another combination with mask
+            #    _, _, z_k, z_x, mask = model(x_i, x_x, args.attn_head, args.mask)
+            #    loss = criterion(z_k, z_x).to(args.device) + loss
 
-            # no mask (normal simclr they have the same shape)
-            _, _, z_k, z_x, _ = model(x_i, x_k, False, args.mask)
-            loss = criterion(z_k, z_x).to(args.device) + loss
+            #    # another combination with mask (I forgot this one)
+            #    _, _, z_k, z_x, mask = model(x_k, x_j, args.attn_head, args.mask)
+            #    loss = criterion(z_k, z_x).to(args.device) + loss
 
-            # no mask (crop simclr they have the same shape)
-            _, _, z_k, z_x, _ = model(x_j, x_x, False, args.mask)
-            loss = criterion(z_k, z_x).to(args.device) + loss
+            #    # no mask (normal simclr they have the same shape)
+            #    _, _, z_k, z_x, _ = model(x_i, x_k, False, args.mask)
+            #    loss = criterion(z_k, z_x).to(args.device) + loss
 
-        loss.backward()
+            #    # no mask (crop simclr they have the same shape)
+            #    _, _, z_k, z_x, _ = model(x_j, x_x, False, args.mask)
+            #    loss = criterion(z_k, z_x).to(args.device) + loss
 
-        optimizer.step()
+            loss.backward()
 
-        if dist.is_available() and dist.is_initialized():
-            loss = loss.data.clone()
-            dist.all_reduce(loss.div_(dist.get_world_size()))
+            optimizer.step()
 
-        # calculate the metrics
-        embeddings_i = KMeans(n_clusters=10).fit(h_i.detach().cpu())
-        embeddings_j = KMeans(n_clusters=10).fit(h_j.detach().cpu())
+            if dist.is_available() and dist.is_initialized():
+                loss = loss.data.clone()
+                dist.all_reduce(loss.div_(dist.get_world_size()))
 
-        pred_labels_i = embeddings_i.labels_
-        pred_labels_j = embeddings_j.labels_
+            # calculate the metrics
+            embeddings_i = KMeans(n_clusters=10).fit(h_i.detach().cpu())
+            embeddings_j = KMeans(n_clusters=10).fit(h_j.detach().cpu())
 
-        # produce a numpy version of the labels
-        all_labels = labels.detach().numpy()
+            pred_labels_i = embeddings_i.labels_
+            pred_labels_j = embeddings_j.labels_
 
-        nmi_i = normalized_mutual_info_score(all_labels, pred_labels_i)
-        nmi_j = normalized_mutual_info_score(all_labels, pred_labels_j)
-        nmi = (nmi_i + nmi_j) / 2
-        emb_nmi.append(nmi)
+            # produce a numpy version of the labels
+            all_labels = labels.detach().numpy()
 
-        ari_i = adjusted_rand_score(all_labels, pred_labels_i)
-        ari_j = adjusted_rand_score(all_labels, pred_labels_j)
-        ari = (ari_i + ari_j) / 2
-        emb_ari.append(ari)
+            nmi_i = normalized_mutual_info_score(all_labels, pred_labels_i)
+            nmi_j = normalized_mutual_info_score(all_labels, pred_labels_j)
+            nmi = (nmi_i + nmi_j) / 2
+            emb_nmi.append(nmi)
 
-        ami_i = adjusted_mutual_info_score(all_labels, pred_labels_i)
-        ami_j = adjusted_mutual_info_score(all_labels, pred_labels_j)
-        ami = (ami_i + ami_j) / 2
-        emb_ami.append(ami)
+            ari_i = adjusted_rand_score(all_labels, pred_labels_i)
+            ari_j = adjusted_rand_score(all_labels, pred_labels_j)
+            ari = (ari_i + ari_j) / 2
+            emb_ari.append(ari)
 
-        writer.add_scalar("NMI/emb_train_epoch", nmi, args.global_step)
-        writer.add_scalar("ARI/emb_train_epoch", ari, args.global_step)
-        writer.add_scalar("AMI/emb_train_epoch", ami, args.global_step)
+            ami_i = adjusted_mutual_info_score(all_labels, pred_labels_i)
+            ami_j = adjusted_mutual_info_score(all_labels, pred_labels_j)
+            ami = (ami_i + ami_j) / 2
+            emb_ami.append(ami)
 
-        if args.nr == 0 and step % 50 == 0:
-            print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
+            writer.add_scalar("NMI/emb_train_epoch", nmi, args.global_step)
+            writer.add_scalar("ARI/emb_train_epoch", ari, args.global_step)
+            writer.add_scalar("AMI/emb_train_epoch", ami, args.global_step)
 
-        if args.nr == 0:
-            writer.add_scalar("Loss/train_epoch", loss.item(), args.global_step)
-            if args.attn_head:
-                writer.add_histogram("mask", mask, args.global_step)
-            args.global_step += 1
+            if args.nr == 0 and step % 50 == 0:
+                print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
 
-        loss_epoch += loss.item()
+            if args.nr == 0:
+                writer.add_scalar("Loss/train_epoch", loss.item(), args.global_step)
+                if args.attn_head:
+                    writer.add_histogram("mask", mask, args.global_step)
+                args.global_step += 1
+
+            loss_epoch += loss.item()
     metrics = {"emb_ami": emb_ami, "emb_ari": emb_ari, "emb_nmi": emb_nmi}
     # metrics = {"emb_ami":emb_ami, "emb_ari":emb_ari, "emb_nmi":emb_nmi, "proj_ami":proj_ami, "proj_nmi":proj_nmi, "proj_ari":proj_ari}
     return loss_epoch, metrics
@@ -214,8 +216,6 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
 def main(gpu, args):
     rank = args.nr * args.gpus + gpu
-
-    print("pytorch version:", torch.__version__)
 
     if args.nodes > 1:
         dist.init_process_group("nccl", rank=rank, world_size=args.world_size)
@@ -297,7 +297,6 @@ def main(gpu, args):
             args.model_path, "checkpoint_{}.tar".format(args.epoch_num)
         )
         model.load_state_dict(torch.load(model_fp, map_location=args.device.type))
-    print("device type:", args.device.type)
     model = model.to(args.device)
 
     # optimizer / loss
@@ -399,7 +398,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print(args)
     str_lr = str(args.lr).replace(".", "")
     print(
         f"name: {args.model}_{args.mask}_{args.dataset}_{args.epochs}_{args.resnet}_lr{str_lr}"
@@ -415,6 +413,7 @@ if __name__ == "__main__":
     args.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     args.num_gpus = torch.cuda.device_count()
     args.world_size = args.gpus * args.nodes
+    print("Device is: ", args.device)
 
     if args.nodes > 1:
         print(

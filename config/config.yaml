@@ -10,17 +10,17 @@ dataset_dir: "./datasets"
 
 # train options
 seed: 42 # sacred handles automatic seeding when passed in the config
-batch_size: 16
+batch_size: 128
 image_size: 224
-crop_size: 128
+crop_size: 224
 start_epoch: 0
-epochs: 990
+epochs: 1001
 #dataset: ["CIFAR10","STL10"] # STL10
 dataset: ["CIFAR10"]
 pretrain: True
 attn_head: True
-mask: "hard"
-model: "simclr"
+mask: "nnt"
+model: "attn_simclr"
 lr: 0.0003
 #lr: 0.00001
 
@@ -41,3 +41,10 @@ reload: False
 # logistic regression options
 logistic_batch_size: 256
 logistic_epochs: 500
+
+#run:
+#    just run simclr ex0
+#    same backbone (one encoder with attn) same transform ex1 this will tell us if simclr with attn improves
+#    different transform with same backbone (one encoder with attn) ex2 will tell use if the transformation is wrong
+#    same transform ex1 with two encoders ex3 tell us if two encoders cause problems
+#    different transform with two encoders ex4 this is the paper

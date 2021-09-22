@@ -42,7 +42,7 @@ def get_datasets(args, data):
     if data == "STL10":
         train_dataset = torchvision.datasets.STL10(
             args.dataset_dir,
-            split="unlabeled",
+            split="train",
             download=True,
             transform=TransformsSimCLR(
                 size=args.image_size, crop_size=args.crop_size, attn_head=args.attn_head
@@ -116,51 +116,16 @@ def train(args, train_loader, model, criterion, optimizer, writer):
     emb_ami = []
 
     for step, (elements) in enumerate(train_loader):
-        for e in elements:
+        for data_name, e in zip(args.dataset, elements):
             dinput, labels = e
-            # if args.attn_head:
-            #    x_i, x_j, x_k, x_x = dinput
-            # else:
-            #    x_i, x_j = dinput
             x_i, x_j = dinput
 
-            # if args.attn_head:
-            #    x_i, x_j, x_k, x_x = elements
-            # else:
-            #    x_i, x_j = elements
-            # exit()
-
             optimizer.zero_grad()
-            x_i = x_i.cuda(non_blocking=True)
-            x_j = x_j.cuda(non_blocking=True)
+            x_i = x_i.to("cuda")
+            x_j = x_j.to("cuda")
 
             h_i, h_j, z_i, z_j, mask = model(x_i, x_j, args.attn_head, args.mask)
             loss = criterion(z_i, z_j).to(args.device)
-
-            # this is for the second experiment I was testing
-            # if args.attn_head and args.model == "simclr":
-            #    x_k = x_k.cuda(non_blocking=True)
-            #    x_x = x_x.cuda(non_blocking=True)
-
-            #    # second sample
-            #    _, _, z_k, z_x, mask = model(x_k, x_x, args.attn_head, args.mask)
-            #    loss = criterion(z_k, z_x).to(args.device) + loss
-
-            #    # another combination with mask
-            #    _, _, z_k, z_x, mask = model(x_i, x_x, args.attn_head, args.mask)
-            #    loss = criterion(z_k, z_x).to(args.device) + loss
-
-            #    # another combination with mask (I forgot this one)
-            #    _, _, z_k, z_x, mask = model(x_k, x_j, args.attn_head, args.mask)
-            #    loss = criterion(z_k, z_x).to(args.device) + loss
-
-            #    # no mask (normal simclr they have the same shape)
-            #    _, _, z_k, z_x, _ = model(x_i, x_k, False, args.mask)
-            #    loss = criterion(z_k, z_x).to(args.device) + loss
-
-            #    # no mask (crop simclr they have the same shape)
-            #    _, _, z_k, z_x, _ = model(x_j, x_x, False, args.mask)
-            #    loss = criterion(z_k, z_x).to(args.device) + loss
 
             loss.backward()
 
@@ -195,9 +160,9 @@ def train(args, train_loader, model, criterion, optimizer, writer):
             ami = (ami_i + ami_j) / 2
             emb_ami.append(ami)
 
-            writer.add_scalar("NMI/emb_train_epoch", nmi, args.global_step)
-            writer.add_scalar("ARI/emb_train_epoch", ari, args.global_step)
-            writer.add_scalar("AMI/emb_train_epoch", ami, args.global_step)
+            writer.add_scalar(f"NMI/emb_train_epoch_{data_name}", nmi, args.global_step)
+            writer.add_scalar(f"ARI/emb_train_epoch_{data_name}", ari, args.global_step)
+            writer.add_scalar(f"AMI/emb_train_epoch_{data_name}", ami, args.global_step)
 
             if args.nr == 0 and step % 50 == 0:
                 print(f"Step [{step}/{len(train_loader)}]\t Loss: {loss.item()}")
@@ -210,7 +175,6 @@ def train(args, train_loader, model, criterion, optimizer, writer):
 
             loss_epoch += loss.item()
     metrics = {"emb_ami": emb_ami, "emb_ari": emb_ari, "emb_nmi": emb_nmi}
-    # metrics = {"emb_ami":emb_ami, "emb_ari":emb_ari, "emb_nmi":emb_nmi, "proj_ami":proj_ami, "proj_nmi":proj_nmi, "proj_ari":proj_ari}
     return loss_epoch, metrics
 
 
@@ -281,15 +245,11 @@ def main(gpu, args):
     if args.model == "simclr":
         encoder = get_resnet(args.resnet, pretrained=False)
         n_features = encoder.fc.in_features  # get dimensions of fc layer
+        model = SimCLR(encoder, args.projection_dim, n_features)
     else:
         encoder1 = get_resnet(args.resnet, pretrained=False)
         encoder2 = get_resnet(args.resnet, pretrained=False)
         n_features = encoder1.fc.in_features  # get dimensions of fc layer
-
-    # initialize model
-    if args.model == "simclr":
-        model = SimCLR(encoder, args.projection_dim, n_features)
-    else:
         model = Attn_SimCLR(encoder1, encoder2, args.projection_dim, n_features)
 
     if args.reload:
@@ -375,9 +335,6 @@ def main(gpu, args):
                 sum(metrics["emb_ami"]) / len(metrics["emb_ami"]),
                 epoch,
             )
-            # writer.add_scalar("NMI/proj_train", sum(metrics['proj_nmi'])/len(metrics['proj_nmi']), epoch)
-            # writer.add_scalar("ARI/proj_train", sum(metrics['proj_ari'])/len(metrics['proj_ari']), epoch)
-            # writer.add_scalar("AMI/proj_train", sum(metrics['proj_ami'])/len(metrics['proj_ami']), epoch)
 
             print(
                 f"Epoch [{epoch}/{args.epochs}]\t Loss: {loss_epoch / len(train_loader)}\t lr: {round(lr, 5)}"
@@ -422,3 +379,4 @@ if __name__ == "__main__":
         mp.spawn(main, args=(args,), nprocs=args.gpus, join=True)
     else:
         main(0, args)
+
